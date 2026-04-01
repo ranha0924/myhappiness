@@ -88,7 +88,7 @@ function createStars() {
     var theta = Math.random() * Math.PI * 2;
     var phi = Math.acos(2 * Math.random() - 1);
     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) - 30;
     positions[i * 3 + 2] = r * Math.cos(phi);
 
     var brightness = 0.3 + Math.random() * 0.7;
