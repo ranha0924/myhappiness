@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이것은 행복인가요?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 1단계: 인트로 -->
+  <section id="scene-intro" class="scene active">
+    <div class="floating-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
+    </div>
+    <div class="scene-content">
+      <h1 class="intro-title">이것은 <span class="text-accent">행복</span>인가요?</h1>
+      <p class="intro-subtitle">지금부터 여러 순간들을 보여드릴게요.<br>각 순간이 당신에게 '행복'인지, 아닌지 골라주세요.<br>정답은 없습니다.</p>
+      <button id="btn-start" class="btn btn-primary">시작하기</button>
+      <p class="intro-meta">약 3분 소요 · 12개의 순간</p>
+    </div>
+  </section>
+
+  <!-- 2단계: 순간 카드 -->
+  <section id="scene-cards" class="scene">
+    <div class="scene-content">
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+        <span class="progress-text" id="progress-text">1 / 12</span>
+      </div>
+      <div class="card" id="moment-card">
+        <div class="card-emoji" id="card-emoji"></div>
+        <p class="card-title" id="card-title"></p>
+        <p class="card-desc" id="card-desc"></p>
+      </div>
+      <div class="card-buttons">
+        <button id="btn-no" class="btn btn-outline">✕ 행복이 아니야</button>
+        <button id="btn-yes" class="btn btn-accent">○ 이건 행복이야</button>
+      </div>
+      <div class="collected-emojis" id="collected-emojis"></div>
+    </div>
+  </section>
+
+  <!-- 3단계: 결과 -->
+  <section id="scene-result" class="scene">
+    <div class="scene-content">
+
+      <!-- 스텝 1: 모은 조각들 -->
+      <div id="result-step1" class="result-step">
+        <h2 class="result-heading">당신이 모은 <span class="text-accent">행복</span>의 조각들</h2>
+        <div class="mosaic-grid" id="mosaic-grid"></div>
+        <p class="result-stat" id="result-stat"></p>
+        <button id="btn-reveal" class="btn btn-primary">그런데요...</button>
+      </div>
+
+      <!-- 스텝 2: 반전 -->
+      <div id="result-step2" class="result-step" style="display:none;">
+        <div class="reveal-text-group">
+          <p class="reveal-line" id="reveal-line-1">사실</p>
+          <p class="reveal-line" id="reveal-line-2">이 모든 순간은</p>
+          <p class="reveal-line reveal-highlight" id="reveal-line-3">누군가에겐 <span class="text-accent">행복</span>입니다</p>
+        </div>
+        <div class="mosaic-grid mosaic-full" id="mosaic-grid-full"></div>
+        <p class="reveal-body">당신이 행복이 아니라고 한 순간도,<br>다른 누군가에겐 가장 소중한 행복일 수 있어요.<br>모두의 행복은 다른 모양을 하고 있습니다.</p>
+        <button id="btn-final" class="btn btn-primary">그래서 행복이란</button>
+      </div>
+
+      <!-- 스텝 3: 최종 메시지 -->
+      <div id="result-step3" class="result-step" style="display:none;">
+        <div class="final-quote">
+          <span class="quote-mark">&ldquo;</span>
+          <p class="quote-text">기쁘고, 의미 있다고 느끼는<br>모든 순간이 곧 <span class="text-accent">행복</span>이다.</p>
+          <span class="quote-mark quote-mark-end">&rdquo;</span>
+        </div>
+        <div class="essay">
+          <p class="essay-line">행복은 거창한 성공도, 완벽한 하루도 아닙니다.</p>
+          <p class="essay-line">무언가를 만들어냈을 때의 뿌듯함,<br>소중한 사람과 나누는 평범한 대화,<br>어제보다 한 걸음 성장했다는 느낌,<br>아무것도 하지 않아도 되는 고요한 평온함 —</p>
+          <p class="essay-line">이 순간들은 모두 다른 모양이지만,<br>하나의 공통점이 있습니다.</p>
+          <p class="essay-line essay-highlight">당신이 그 순간을 소중하다고 느꼈다는 것.</p>
+          <p class="essay-line">행복의 기준은 세상이 정하는 게 아니라,<br>당신의 마음이 정합니다.<br>그러니 지금 이 순간에도,<br>당신만의 행복을 놓치지 마세요.</p>
+        </div>
+        <p class="signature">나에게 행복이란 — 사회 수행평가</p>
+        <button id="btn-restart" class="btn btn-outline">처음부터 다시하기</button>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

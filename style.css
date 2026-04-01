@@ -1,0 +1,494 @@
+/* ===== Reset & Base ===== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #0A0A0F;
+  color: #E0E0E0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Accent Text ===== */
+.text-accent {
+  background: linear-gradient(135deg, #F4C553, #FFB85C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== Scene Layout ===== */
+.scene {
+  min-height: 100vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.scene.active {
+  display: flex;
+}
+
+.scene-content {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Floating Shapes (Intro BG) ===== */
+.floating-shapes {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  filter: blur(60px);
+  animation: floatShape 20s ease-in-out infinite;
+}
+
+.shape-1 {
+  width: 300px; height: 300px;
+  background: #F4C553;
+  top: 10%; left: 10%;
+  animation-delay: 0s;
+}
+.shape-2 {
+  width: 200px; height: 200px;
+  background: #FFB85C;
+  top: 60%; right: 10%;
+  animation-delay: -5s;
+}
+.shape-3 {
+  width: 250px; height: 250px;
+  background: #F4C553;
+  bottom: 10%; left: 40%;
+  animation-delay: -10s;
+}
+.shape-4 {
+  width: 180px; height: 180px;
+  background: #FFB85C;
+  top: 30%; right: 30%;
+  animation-delay: -15s;
+}
+.shape-5 {
+  width: 220px; height: 220px;
+  background: #F4C553;
+  bottom: 30%; left: 15%;
+  animation-delay: -8s;
+}
+
+@keyframes floatShape {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(15px, 30px) scale(1.05); }
+}
+
+/* ===== Intro Scene ===== */
+.intro-title {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(32px, 7vw, 52px);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards;
+}
+
+.intro-subtitle {
+  font-size: clamp(14px, 3vw, 17px);
+  line-height: 1.8;
+  color: #A0A0B0;
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.3s forwards;
+}
+
+.intro-meta {
+  font-size: 13px;
+  color: #606070;
+  margin-top: 20px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.7s forwards;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 14px 36px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  outline: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #F4C553, #FFB85C);
+  color: #0A0A0F;
+  font-weight: 600;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.5s forwards;
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(244, 197, 83, 0.3);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #F4C553, #FFB85C);
+  color: #0A0A0F;
+  font-weight: 600;
+}
+
+.btn-accent:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(244, 197, 83, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  color: #808090;
+  border: 1.5px solid #3A3A50;
+}
+
+.btn-outline:hover {
+  transform: scale(1.05);
+  border-color: #606080;
+  color: #C0C0D0;
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar-container {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: #1C1C2E;
+  border-radius: 2px;
+  margin-bottom: 48px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #F4C553, #FFB85C);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  width: 0%;
+}
+
+.progress-text {
+  position: absolute;
+  right: 0;
+  top: 12px;
+  font-size: 13px;
+  color: #606070;
+}
+
+/* ===== Moment Card ===== */
+.card {
+  background: #1C1C2E;
+  border: 1px solid #2A2A40;
+  border-radius: 20px;
+  padding: 48px 32px 40px;
+  margin-bottom: 32px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.card.card-exit {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.card.card-enter {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.card-emoji {
+  font-size: 56px;
+  margin-bottom: 24px;
+  line-height: 1;
+}
+
+.card-title {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(18px, 4vw, 22px);
+  line-height: 1.6;
+  color: #F0F0F5;
+  margin-bottom: 12px;
+}
+
+.card-desc {
+  font-size: clamp(13px, 3vw, 15px);
+  color: #808090;
+  line-height: 1.5;
+}
+
+/* ===== Card Buttons ===== */
+.card-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.card-buttons .btn {
+  flex: 1;
+  max-width: 200px;
+  padding: 14px 20px;
+  font-size: 15px;
+}
+
+/* ===== Collected Emojis ===== */
+.collected-emojis {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.collected-emoji {
+  font-size: 24px;
+  opacity: 0;
+  transform: scale(0);
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ===== Result Scene ===== */
+.result-step {
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.result-heading {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(22px, 5vw, 30px);
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+
+/* ===== Mosaic Grid ===== */
+.mosaic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0 auto 28px;
+  max-width: 320px;
+}
+
+.mosaic-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.mosaic-item.filled {
+  background: rgba(244, 197, 83, 0.12);
+  border: 1px solid rgba(244, 197, 83, 0.25);
+}
+
+.mosaic-item.empty {
+  background: #1A1A28;
+  border: 1px solid #2A2A3A;
+}
+
+.mosaic-item.glow {
+  background: rgba(244, 197, 83, 0.18);
+  border: 1px solid rgba(244, 197, 83, 0.4);
+  box-shadow: 0 0 20px rgba(244, 197, 83, 0.15);
+  transform: scale(0);
+  animation: mosaicReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes mosaicReveal {
+  to { transform: scale(1); }
+}
+
+.result-stat {
+  font-size: 16px;
+  color: #A0A0B0;
+  margin-bottom: 32px;
+}
+
+/* ===== Reveal (Step 2) ===== */
+.reveal-text-group {
+  margin-bottom: 36px;
+}
+
+.reveal-line {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(24px, 5vw, 36px);
+  font-weight: 700;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.reveal-line.show {
+  animation: fadeUp 0.7s ease forwards;
+}
+
+.reveal-highlight {
+  font-size: clamp(28px, 6vw, 42px);
+}
+
+.reveal-body {
+  font-size: clamp(14px, 3vw, 16px);
+  line-height: 2;
+  color: #A0A0B0;
+  margin-top: 28px;
+  margin-bottom: 36px;
+  opacity: 0;
+}
+
+.reveal-body.show {
+  animation: fadeUp 0.7s ease forwards;
+}
+
+/* ===== Final Quote (Step 3) ===== */
+.final-quote {
+  position: relative;
+  margin-bottom: 48px;
+  padding: 20px 0;
+}
+
+.quote-mark {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(60px, 12vw, 100px);
+  background: linear-gradient(135deg, #F4C553, #FFB85C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 0.5;
+  display: block;
+  opacity: 0.4;
+}
+
+.quote-mark-end {
+  text-align: right;
+}
+
+.quote-text {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(24px, 5vw, 38px);
+  font-weight: 700;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+
+/* ===== Essay ===== */
+.essay {
+  margin-bottom: 48px;
+}
+
+.essay-line {
+  font-size: clamp(14px, 3vw, 16px);
+  line-height: 2;
+  color: #B0B0C0;
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.essay-line.show {
+  animation: fadeUp 0.7s ease forwards;
+}
+
+.essay-highlight {
+  font-family: 'Gowun Batang', serif;
+  font-size: clamp(16px, 3.5vw, 20px);
+  color: #F0F0F5;
+  font-weight: 700;
+}
+
+.signature {
+  font-size: 13px;
+  color: #505060;
+  margin-bottom: 32px;
+  opacity: 0;
+}
+
+.signature.show {
+  animation: fadeUp 0.7s ease forwards;
+}
+
+#btn-restart {
+  opacity: 0;
+}
+
+#btn-restart.show {
+  animation: fadeUp 0.7s ease forwards;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .scene-content {
+    padding: 32px 18px;
+  }
+
+  .card {
+    padding: 36px 20px 32px;
+  }
+
+  .card-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card-buttons .btn {
+    max-width: 260px;
+    width: 100%;
+  }
+
+  .mosaic-grid {
+    gap: 8px;
+    max-width: 260px;
+  }
+
+  .mosaic-item {
+    font-size: 22px;
+  }
+}
