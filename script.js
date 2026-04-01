@@ -132,11 +132,11 @@ function createOrbTexture(color, size) {
 
   // Outer glow
   var g1 = ctx.createRadialGradient(half, half, 0, half, half, half);
-  g1.addColorStop(0, 'rgba(255,255,255,1)');
-  g1.addColorStop(0.15, 'rgba(255,255,255,0.8)');
-  g1.addColorStop(0.4, 'rgba(255,255,255,0.3)');
-  g1.addColorStop(0.7, 'rgba(255,255,255,0.08)');
-  g1.addColorStop(1, 'rgba(255,255,255,0)');
+  g1.addColorStop(0, 'rgba(255,255,200,1)');
+  g1.addColorStop(0.15, 'rgba(255,215,0,0.8)');
+  g1.addColorStop(0.4, 'rgba(255,200,0,0.3)');
+  g1.addColorStop(0.7, 'rgba(255,180,0,0.08)');
+  g1.addColorStop(1, 'rgba(255,165,0,0)');
   ctx.fillStyle = g1;
   ctx.fillRect(0, 0, size, size);
 
@@ -149,7 +149,7 @@ function createOrbs() {
   for (var i = 0; i < moments.length; i++) {
     var mat = new THREE.SpriteMaterial({
       map: orbTexture,
-      color: 0xFFFFFF,
+      color: 0xFFD700,
       transparent: true,
       opacity: 1.0,
       blending: THREE.AdditiveBlending,
@@ -348,7 +348,7 @@ function showMoment(index) {
   orb.targetPosition.set(0, 3, 10);
   orb.targetScale = 2.5;
   orb.targetOpacity = 1.0;
-  orb.mesh.material.color.setHex(0xFFFFFF);
+  orb.mesh.material.color.setHex(0xFFD700);
 
   momentCard.classList.remove('card-exit', 'card-enter');
   momentCard.classList.add('card-enter');
@@ -383,7 +383,7 @@ function handleChoice(isHappy) {
     );
     orb.targetScale = 0.8;
     orb.targetOpacity = 0.15;
-    orb.mesh.material.color.setHex(0xFFFFFF);
+    orb.mesh.material.color.setHex(0xFFD700);
   }
 
   momentCard.classList.add('card-exit');
@@ -488,7 +488,7 @@ function showStep2() {
   unhappyOrbs.forEach(function (orb, idx) {
     setTimeout(function () {
       // Set diverse return color (blue/purple tones)
-      orb.mesh.material.color.setHex(0xFFFFFF);
+      orb.mesh.material.color.setHex(0xFFD700);
 
       orb.state = 'result2-heart';
       orb.targetOpacity = 1.0;
@@ -580,7 +580,7 @@ function resetAll() {
     orb.scale = 0.3;
     orb.opacity = 0;
 
-    orb.mesh.material.color.setHex(0xFFFFFF);
+    orb.mesh.material.color.setHex(0xFFD700);
   }
 
   switchScene(sceneResult, sceneIntro);
