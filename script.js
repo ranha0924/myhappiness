@@ -1,5 +1,5 @@
-// ===== 데이터 =====
-const moments = [
+// ===== DATA =====
+var moments = [
   { emoji: '🌅', title: '이른 아침, 아무도 없는 거리를 혼자 걷는다', desc: '세상이 아직 조용한 시간' },
   { emoji: '🍚', title: '점심시간, 혼자 밥을 먹는다', desc: '주변은 시끄럽고 나만 조용하다' },
   { emoji: '📞', title: '오랜 친구에게 갑자기 전화가 온다', desc: '별 이유 없이 네 생각이 났다고 한다' },
@@ -14,203 +14,557 @@ const moments = [
   { emoji: '🌙', title: '하루를 마치고 침대에 누워 오늘을 돌아본다', desc: '나쁘지 않은 하루였다고 느끼는 순간' },
 ];
 
-// ===== 상태 =====
-let currentIndex = 0;
-let choices = []; // true = 행복, false = 아님
-let isTransitioning = false;
+// Colors for "not happy" orbs when they return (diverse colors)
+var returnColors = [
+  0x7B68EE, // medium slate blue
+  0x6495ED, // cornflower blue
+  0x9370DB, // medium purple
+  0x87CEEB, // sky blue
+  0xDDA0DD, // plum
+  0x48D1CC, // medium turquoise
+  0xBA55D3, // medium orchid
+  0x00CED1, // dark turquoise
+  0xB0C4DE, // light steel blue
+  0x8FBC8F, // dark sea green
+  0xF0E68C, // khaki
+  0xE6E6FA, // lavender
+];
 
-// ===== DOM =====
-const sceneIntro = document.getElementById('scene-intro');
-const sceneCards = document.getElementById('scene-cards');
-const sceneResult = document.getElementById('scene-result');
+// ===== STATE =====
+var currentIndex = 0;
+var choices = [];
+var isTransitioning = false;
+var currentPhase = 'intro';
+var orbs = [];
 
-const btnStart = document.getElementById('btn-start');
-const btnYes = document.getElementById('btn-yes');
-const btnNo = document.getElementById('btn-no');
-const btnReveal = document.getElementById('btn-reveal');
-const btnFinal = document.getElementById('btn-final');
-const btnRestart = document.getElementById('btn-restart');
+// ===== THREE.JS GLOBALS =====
+var scene, camera, renderer, starField, pointLight;
+var clock = new THREE.Clock();
+var projVector = new THREE.Vector3();
 
-const progressFill = document.getElementById('progress-fill');
-const progressText = document.getElementById('progress-text');
-const cardEmoji = document.getElementById('card-emoji');
-const cardTitle = document.getElementById('card-title');
-const cardDesc = document.getElementById('card-desc');
-const momentCard = document.getElementById('moment-card');
-const collectedEmojis = document.getElementById('collected-emojis');
+// ===== THREE.JS SETUP =====
+function initThree() {
+  scene = new THREE.Scene();
 
-const mosaicGrid = document.getElementById('mosaic-grid');
-const mosaicGridFull = document.getElementById('mosaic-grid-full');
-const resultStat = document.getElementById('result-stat');
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 30);
 
-const step1 = document.getElementById('result-step1');
-const step2 = document.getElementById('result-step2');
-const step3 = document.getElementById('result-step3');
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+  document.body.insertBefore(renderer.domElement, document.body.firstChild);
 
-// ===== 씬 전환 =====
+  var ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+  scene.add(ambientLight);
+
+  pointLight = new THREE.PointLight(0xFFD700, 1.5, 100);
+  pointLight.position.set(0, 5, 15);
+  scene.add(pointLight);
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ===== STAR PARTICLE SYSTEM =====
+function createStars() {
+  var count = 1500;
+  var geometry = new THREE.BufferGeometry();
+  var positions = new Float32Array(count * 3);
+  var colors = new Float32Array(count * 3);
+
+  for (var i = 0; i < count; i++) {
+    var r = 200 * Math.cbrt(Math.random());
+    var theta = Math.random() * Math.PI * 2;
+    var phi = Math.acos(2 * Math.random() - 1);
+    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = r * Math.cos(phi);
+
+    var brightness = 0.3 + Math.random() * 0.7;
+    colors[i * 3] = brightness;
+    colors[i * 3 + 1] = brightness;
+    colors[i * 3 + 2] = brightness;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  // Create soft circle texture
+  var canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  var ctx = canvas.getContext('2d');
+  var gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.5, 'rgba(255,255,255,0.5)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 32, 32);
+  var starTexture = new THREE.CanvasTexture(canvas);
+
+  var material = new THREE.PointsMaterial({
+    size: 1.5,
+    map: starTexture,
+    transparent: true,
+    vertexColors: true,
+    sizeAttenuation: true,
+    depthWrite: false
+  });
+
+  starField = new THREE.Points(geometry, material);
+  scene.add(starField);
+}
+
+// ===== ORB SYSTEM =====
+function createOrbs() {
+  var container = document.getElementById('emoji-overlay-container');
+
+  for (var i = 0; i < moments.length; i++) {
+    // Main sphere
+    var geo = new THREE.SphereGeometry(0.8, 32, 32);
+    var mat = new THREE.MeshStandardMaterial({
+      color: 0xFFD700,
+      emissive: 0xFFA500,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 1.0
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+
+    // Glow sphere (BackSide)
+    var glowGeo = new THREE.SphereGeometry(1.1, 32, 32);
+    var glowMat = new THREE.MeshBasicMaterial({
+      color: 0xFFD700,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.BackSide
+    });
+    var glowMesh = new THREE.Mesh(glowGeo, glowMat);
+    mesh.add(glowMesh);
+
+    // Random initial position for intro
+    var angle = (i / moments.length) * Math.PI * 2;
+    var radius = 6 + Math.random() * 6;
+    var x = Math.cos(angle) * radius;
+    var y = (Math.random() - 0.5) * 8;
+    var z = Math.sin(angle) * radius * 0.5;
+
+    mesh.position.set(x, y, z);
+    scene.add(mesh);
+
+    // Emoji HTML element
+    var el = document.createElement('div');
+    el.className = 'orb-emoji';
+    el.textContent = moments[i].emoji;
+    el.style.fontSize = '28px';
+    container.appendChild(el);
+
+    orbs.push({
+      index: i,
+      mesh: mesh,
+      glowMesh: glowMesh,
+      htmlEl: el,
+      state: 'intro',
+      position: mesh.position.clone(),
+      targetPosition: mesh.position.clone(),
+      opacity: 1.0,
+      targetOpacity: 1.0,
+      scale: 1.0,
+      targetScale: 1.0,
+      orbitAngle: angle,
+      orbitRadius: 5 + Math.random() * 2,
+      orbitSpeed: 0.3 + Math.random() * 0.2,
+      bobOffset: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+// ===== ORB ANIMATION =====
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function updateOrbs(elapsed) {
+  var factor = 0.03;
+
+  for (var i = 0; i < orbs.length; i++) {
+    var orb = orbs[i];
+
+    // Lerp toward targets
+    orb.position.x = lerp(orb.position.x, orb.targetPosition.x, factor);
+    orb.position.y = lerp(orb.position.y, orb.targetPosition.y, factor);
+    orb.position.z = lerp(orb.position.z, orb.targetPosition.z, factor);
+    orb.opacity = lerp(orb.opacity, orb.targetOpacity, factor);
+    orb.scale = lerp(orb.scale, orb.targetScale, factor);
+
+    // Bobbing for intro and orbiting states
+    if (orb.state === 'intro') {
+      orb.mesh.position.set(
+        orb.position.x,
+        orb.position.y + Math.sin(elapsed * 0.8 + orb.bobOffset) * 0.5,
+        orb.position.z
+      );
+    } else if (orb.state === 'happy') {
+      // Orbit around center in upper area
+      orb.orbitAngle += orb.orbitSpeed * 0.01;
+      var ox = Math.cos(orb.orbitAngle) * orb.orbitRadius;
+      var oz = Math.sin(orb.orbitAngle) * orb.orbitRadius * 0.4;
+      orb.targetPosition.x = ox;
+      orb.targetPosition.z = oz;
+      orb.mesh.position.set(
+        orb.position.x,
+        orb.position.y + Math.sin(elapsed + orb.bobOffset) * 0.2,
+        orb.position.z
+      );
+    } else if (orb.state === 'result1-circle' || orb.state === 'result2-heart') {
+      orb.mesh.position.set(
+        orb.position.x,
+        orb.position.y + Math.sin(elapsed * 0.5 + orb.bobOffset) * 0.15,
+        orb.position.z
+      );
+    } else {
+      orb.mesh.position.copy(orb.position);
+    }
+
+    // Apply scale and opacity
+    orb.mesh.scale.setScalar(orb.scale);
+    orb.mesh.material.opacity = orb.opacity;
+    orb.glowMesh.material.opacity = orb.opacity * 0.15;
+
+    // Pulse for result states
+    if (orb.state === 'result1-circle') {
+      var pulse = 1 + Math.sin(elapsed * 2 + orb.bobOffset) * 0.08;
+      orb.mesh.scale.setScalar(orb.scale * pulse);
+    }
+  }
+}
+
+function updateEmojiOverlays() {
+  var halfW = window.innerWidth / 2;
+  var halfH = window.innerHeight / 2;
+
+  for (var i = 0; i < orbs.length; i++) {
+    var orb = orbs[i];
+
+    if (orb.opacity < 0.1 || orb.state === 'hidden') {
+      orb.htmlEl.style.display = 'none';
+      continue;
+    }
+
+    projVector.copy(orb.mesh.position);
+    projVector.project(camera);
+
+    if (projVector.z > 1) {
+      orb.htmlEl.style.display = 'none';
+      continue;
+    }
+
+    var screenX = projVector.x * halfW + halfW;
+    var screenY = -projVector.y * halfH + halfH;
+
+    orb.htmlEl.style.display = 'block';
+    orb.htmlEl.style.transform = 'translate(-50%, -50%) translate(' + screenX + 'px, ' + screenY + 'px)';
+    orb.htmlEl.style.opacity = Math.min(orb.opacity, 1);
+    orb.htmlEl.style.fontSize = Math.max(orb.scale * 24, 8) + 'px';
+  }
+}
+
+// ===== ARRANGEMENT FUNCTIONS =====
+function arrangeOrbsCircle(orbList, radius, centerY) {
+  for (var i = 0; i < orbList.length; i++) {
+    var angle = (i / orbList.length) * Math.PI * 2 - Math.PI / 2;
+    orbList[i].targetPosition.set(
+      Math.cos(angle) * radius,
+      centerY + Math.sin(angle) * radius * 0.6,
+      0
+    );
+    orbList[i].targetScale = 0.8;
+    orbList[i].targetOpacity = 1.0;
+  }
+}
+
+function arrangeOrbsHeart(orbList) {
+  for (var i = 0; i < orbList.length; i++) {
+    var t = (i / orbList.length) * Math.PI * 2;
+    var hx = 16 * Math.pow(Math.sin(t), 3);
+    var hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    orbList[i].targetPosition.set(hx * 0.25, hy * 0.25, 0);
+    orbList[i].targetScale = 0.7;
+    orbList[i].targetOpacity = 1.0;
+  }
+}
+
+// ===== DOM REFERENCES =====
+var sceneIntro = document.getElementById('scene-intro');
+var sceneCards = document.getElementById('scene-cards');
+var sceneResult = document.getElementById('scene-result');
+
+var btnStart = document.getElementById('btn-start');
+var btnYes = document.getElementById('btn-yes');
+var btnNo = document.getElementById('btn-no');
+var btnReveal = document.getElementById('btn-reveal');
+var btnFinal = document.getElementById('btn-final');
+var btnRestart = document.getElementById('btn-restart');
+
+var cardTitle = document.getElementById('card-title');
+var cardDesc = document.getElementById('card-desc');
+var momentCard = document.getElementById('moment-card');
+var orbCountEl = document.getElementById('orb-count');
+var bridgeTextEl = document.getElementById('bridge-text');
+var resultStat = document.getElementById('result-stat');
+
+var step1 = document.getElementById('result-step1');
+var step2 = document.getElementById('result-step2');
+var step3 = document.getElementById('result-step3');
+
+// ===== SCENE SWITCHING =====
 function switchScene(from, to) {
   from.classList.remove('active');
   to.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
-// ===== 카드 렌더링 =====
-function renderCard(index) {
-  const m = moments[index];
-  cardEmoji.textContent = m.emoji;
-  cardTitle.textContent = m.title;
-  cardDesc.textContent = m.desc;
-  progressFill.style.width = ((index + 1) / moments.length * 100) + '%';
-  progressText.textContent = (index + 1) + ' / ' + moments.length;
+// ===== PHASE: INTRO =====
+function setupIntro() {
+  currentPhase = 'intro';
+  for (var i = 0; i < orbs.length; i++) {
+    orbs[i].state = 'intro';
+    orbs[i].targetOpacity = 1.0;
+    orbs[i].targetScale = 1.0;
+  }
 }
 
-// ===== 카드 전환 애니메이션 =====
-function transitionCard(nextIndex) {
+function startFromIntro() {
+  // Scatter orbs outward
+  for (var i = 0; i < orbs.length; i++) {
+    var angle = Math.random() * Math.PI * 2;
+    var dist = 40 + Math.random() * 30;
+    orbs[i].targetPosition.set(
+      Math.cos(angle) * dist,
+      (Math.random() - 0.5) * 40,
+      Math.sin(angle) * dist * 0.3
+    );
+    orbs[i].targetOpacity = 0;
+    orbs[i].targetScale = 0.3;
+    orbs[i].state = 'hidden';
+  }
+
+  setTimeout(function () {
+    switchScene(sceneIntro, sceneCards);
+    currentPhase = 'card';
+    currentIndex = 0;
+    showMoment(0);
+  }, 800);
+}
+
+// ===== PHASE: CARDS =====
+function showMoment(index) {
+  var m = moments[index];
+  cardTitle.textContent = m.title;
+  cardDesc.textContent = m.desc;
+
+  var happyCount = choices.filter(function (c) { return c; }).length;
+  orbCountEl.textContent = happyCount > 0 ? (happyCount + '개의 행복') : '';
+
+  // Bring the orb to center
+  var orb = orbs[index];
+  orb.state = 'active';
+  orb.targetPosition.set(0, 3, 10);
+  orb.targetScale = 2.0;
+  orb.targetOpacity = 1.0;
+  // Reset to gold color for active display
+  orb.mesh.material.color.setHex(0xFFD700);
+  orb.mesh.material.emissive.setHex(0xFFA500);
+  orb.glowMesh.material.color.setHex(0xFFD700);
+
+  momentCard.classList.remove('card-exit', 'card-enter');
+  momentCard.classList.add('card-enter');
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      momentCard.classList.remove('card-enter');
+    });
+  });
+}
+
+function handleChoice(isHappy) {
   if (isTransitioning) return;
   isTransitioning = true;
 
-  momentCard.classList.add('card-exit');
-
-  setTimeout(function () {
-    renderCard(nextIndex);
-    momentCard.classList.remove('card-exit');
-    momentCard.classList.add('card-enter');
-
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        momentCard.classList.remove('card-enter');
-        isTransitioning = false;
-      });
-    });
-  }, 400);
-}
-
-// ===== 선택 처리 =====
-function handleChoice(isHappy) {
-  if (isTransitioning) return;
-
   choices.push(isHappy);
+  var orb = orbs[currentIndex];
 
   if (isHappy) {
-    var span = document.createElement('span');
-    span.className = 'collected-emoji';
-    span.textContent = moments[currentIndex].emoji;
-    collectedEmojis.appendChild(span);
+    // Fly to orbit zone
+    orb.state = 'happy';
+    orb.targetPosition.set(0, 10, 0);
+    orb.targetScale = 0.6;
+    orb.targetOpacity = 1.0;
+  } else {
+    // Dim and push far away
+    orb.state = 'notHappy';
+    var angle = Math.random() * Math.PI * 2;
+    orb.targetPosition.set(
+      Math.cos(angle) * 50,
+      (Math.random() - 0.5) * 30,
+      Math.sin(angle) * 20
+    );
+    orb.targetScale = 0.5;
+    orb.targetOpacity = 0.2;
+    // Dim the color
+    orb.mesh.material.color.setHex(0x4A4A6A);
+    orb.mesh.material.emissive.setHex(0x2A2A4A);
+    orb.glowMesh.material.color.setHex(0x4A4A6A);
   }
+
+  momentCard.classList.add('card-exit');
 
   currentIndex++;
 
-  if (currentIndex >= moments.length) {
-    setTimeout(function () {
+  // Check for bridge text
+  var showBridge = (currentIndex === 4 || currentIndex === 8) && currentIndex < moments.length;
+
+  setTimeout(function () {
+    if (currentIndex >= moments.length) {
+      isTransitioning = false;
       showResult();
-    }, 300);
-  } else {
-    transitionCard(currentIndex);
-  }
-}
-
-// ===== 결과 표시 =====
-function showResult() {
-  switchScene(sceneCards, sceneResult);
-  buildMosaicStep1();
-}
-
-function buildMosaicStep1() {
-  mosaicGrid.innerHTML = '';
-  var happyCount = 0;
-
-  moments.forEach(function (m, i) {
-    var div = document.createElement('div');
-    div.className = 'mosaic-item';
-
-    if (choices[i]) {
-      div.classList.add('filled');
-      div.textContent = m.emoji;
-      happyCount++;
+    } else if (showBridge) {
+      showBridgeTextFn(currentIndex === 4 ? '작은 순간들이 모여...' : '행복은 어떤 모양일까요...');
+      setTimeout(function () {
+        hideBridgeText();
+        setTimeout(function () {
+          showMoment(currentIndex);
+          isTransitioning = false;
+        }, 400);
+      }, 2500);
     } else {
-      div.classList.add('empty');
+      showMoment(currentIndex);
+      isTransitioning = false;
     }
+  }, 500);
+}
 
-    mosaicGrid.appendChild(div);
-  });
+function showBridgeTextFn(text) {
+  bridgeTextEl.innerHTML = '<p>' + text + '</p>';
+  bridgeTextEl.classList.add('active');
+}
 
+function hideBridgeText() {
+  bridgeTextEl.classList.remove('active');
+  bridgeTextEl.innerHTML = '';
+}
+
+// ===== PHASE: RESULTS =====
+function showResult() {
+  currentPhase = 'result1';
+  switchScene(sceneCards, sceneResult);
+
+  var happyOrbs = [];
+  var unhappyOrbs = [];
+  for (var i = 0; i < orbs.length; i++) {
+    if (choices[i]) {
+      happyOrbs.push(orbs[i]);
+    } else {
+      unhappyOrbs.push(orbs[i]);
+    }
+  }
+
+  // Arrange happy orbs in circle at center
+  for (var j = 0; j < happyOrbs.length; j++) {
+    happyOrbs[j].state = 'result1-circle';
+  }
+  arrangeOrbsCircle(happyOrbs, 4, 0);
+
+  // Keep unhappy orbs dim and far
+  for (var k = 0; k < unhappyOrbs.length; k++) {
+    unhappyOrbs[k].targetOpacity = 0.15;
+    unhappyOrbs[k].targetScale = 0.4;
+  }
+
+  var happyCount = happyOrbs.length;
   resultStat.textContent = happyCount + ' / 12개의 순간을 행복이라 답했어요';
 }
 
-// ===== 반전 (스텝 2) =====
 function showStep2() {
+  currentPhase = 'result2';
   step1.style.display = 'none';
   step2.style.display = 'block';
   step2.style.opacity = '0';
-
   requestAnimationFrame(function () {
     step2.style.transition = 'opacity 0.5s ease';
     step2.style.opacity = '1';
   });
 
-  // 반전 텍스트 순차 등장
+  // Reveal text lines sequentially (2 lines now)
   var lines = [
     document.getElementById('reveal-line-1'),
     document.getElementById('reveal-line-2'),
-    document.getElementById('reveal-line-3'),
   ];
-
   lines.forEach(function (line, i) {
     setTimeout(function () {
       line.classList.add('show');
     }, 400 + i * 600);
   });
 
-  // 모자이크 완성
-  buildMosaicStep2();
+  // After text, bring back unhappy orbs with diverse colors
+  var unhappyOrbs = [];
+  for (var i = 0; i < orbs.length; i++) {
+    if (!choices[i]) {
+      unhappyOrbs.push(orbs[i]);
+    }
+  }
 
-  // 본문 텍스트
+  var baseDelay = 400 + lines.length * 600 + 600;
+
+  unhappyOrbs.forEach(function (orb, idx) {
+    setTimeout(function () {
+      // Set diverse return color (blue/purple tones)
+      var returnColor = returnColors[orb.index % returnColors.length];
+      orb.mesh.material.color.setHex(returnColor);
+      orb.mesh.material.emissive.setHex(returnColor);
+      orb.mesh.material.emissiveIntensity = 0.3;
+      orb.glowMesh.material.color.setHex(returnColor);
+
+      orb.state = 'result2-heart';
+      orb.targetOpacity = 1.0;
+      orb.targetScale = 0.7;
+    }, baseDelay + idx * 300);
+  });
+
+  // After all return, form heart with ALL orbs
+  var heartDelay = baseDelay + unhappyOrbs.length * 300 + 500;
+  setTimeout(function () {
+    for (var i = 0; i < orbs.length; i++) {
+      orbs[i].state = 'result2-heart';
+    }
+    arrangeOrbsHeart(orbs);
+  }, heartDelay);
+
+  // Show body text
   var revealBody = step2.querySelector('.reveal-body');
   setTimeout(function () {
     revealBody.classList.add('show');
-  }, 400 + lines.length * 600 + 800);
+  }, heartDelay + 800);
 }
 
-function buildMosaicStep2() {
-  mosaicGridFull.innerHTML = '';
-
-  var delayBase = 400 + 3 * 600 + 200;
-
-  moments.forEach(function (m, i) {
-    var div = document.createElement('div');
-    div.className = 'mosaic-item';
-
-    if (choices[i]) {
-      div.classList.add('filled');
-      div.textContent = m.emoji;
-    } else {
-      // 처음에는 빈 칸으로 표시, 후에 채워짐
-      div.classList.add('empty');
-      div.textContent = '';
-
-      setTimeout(function () {
-        div.classList.remove('empty');
-        div.classList.add('glow');
-        div.textContent = m.emoji;
-      }, delayBase + i * 120);
-    }
-
-    mosaicGridFull.appendChild(div);
-  });
-}
-
-// ===== 최종 메시지 (스텝 3) =====
 function showStep3() {
+  currentPhase = 'result3';
   step2.style.display = 'none';
   step3.style.display = 'block';
   step3.style.opacity = '0';
-
   requestAnimationFrame(function () {
     step3.style.transition = 'opacity 0.5s ease';
     step3.style.opacity = '1';
   });
 
-  // 에세이 단락 순차 등장
+  // Keep heart rotating
+  // (handled in animate loop)
+
   var essayLines = step3.querySelectorAll('.essay-line');
   essayLines.forEach(function (line, i) {
     setTimeout(function () {
@@ -218,56 +572,111 @@ function showStep3() {
     }, 400 + i * 500);
   });
 
-  // 서명
   var signature = step3.querySelector('.signature');
   setTimeout(function () {
     signature.classList.add('show');
   }, 400 + essayLines.length * 500 + 300);
 
-  // 다시하기 버튼
   setTimeout(function () {
     btnRestart.classList.add('show');
   }, 400 + essayLines.length * 500 + 600);
 }
 
-// ===== 초기화 =====
+// ===== RESET =====
 function resetAll() {
   currentIndex = 0;
   choices = [];
   isTransitioning = false;
-  collectedEmojis.innerHTML = '';
-  mosaicGrid.innerHTML = '';
-  mosaicGridFull.innerHTML = '';
+  currentPhase = 'intro';
 
+  // Reset HTML states
   step1.style.display = 'block';
   step2.style.display = 'none';
   step3.style.display = 'none';
+  orbCountEl.textContent = '';
+  hideBridgeText();
 
-  // 애니메이션 클래스 초기화
+  // Remove animation classes
   step2.querySelectorAll('.show').forEach(function (el) { el.classList.remove('show'); });
   step3.querySelectorAll('.show').forEach(function (el) { el.classList.remove('show'); });
   btnRestart.classList.remove('show');
-
   var sig = step3.querySelector('.signature');
   if (sig) sig.classList.remove('show');
+
+  // Reset orbs
+  for (var i = 0; i < orbs.length; i++) {
+    var orb = orbs[i];
+    var angle = (i / moments.length) * Math.PI * 2;
+    var radius = 6 + Math.random() * 6;
+
+    orb.state = 'intro';
+    orb.targetPosition.set(
+      Math.cos(angle) * radius,
+      (Math.random() - 0.5) * 8,
+      Math.sin(angle) * radius * 0.5
+    );
+    orb.targetScale = 1.0;
+    orb.targetOpacity = 1.0;
+    orb.scale = 0.3;
+    orb.opacity = 0;
+
+    // Reset colors to gold
+    orb.mesh.material.color.setHex(0xFFD700);
+    orb.mesh.material.emissive.setHex(0xFFA500);
+    orb.mesh.material.emissiveIntensity = 0.3;
+    orb.glowMesh.material.color.setHex(0xFFD700);
+  }
 
   switchScene(sceneResult, sceneIntro);
 }
 
-// ===== 이벤트 =====
-btnStart.addEventListener('click', function () {
-  switchScene(sceneIntro, sceneCards);
-  renderCard(0);
-});
+// ===== ANIMATION LOOP =====
+var heartRotation = 0;
 
-btnYes.addEventListener('click', function () {
-  handleChoice(true);
-});
+function animate() {
+  requestAnimationFrame(animate);
+  var elapsed = clock.getElapsedTime();
 
-btnNo.addEventListener('click', function () {
-  handleChoice(false);
-});
+  // Stars
+  if (starField) {
+    starField.rotation.y += 0.0001;
+    starField.rotation.x += 0.00005;
+  }
 
+  // Orbs
+  updateOrbs(elapsed);
+  updateEmojiOverlays();
+
+  // Heart rotation in result3
+  if (currentPhase === 'result3' || currentPhase === 'result2') {
+    heartRotation += 0.003;
+    for (var i = 0; i < orbs.length; i++) {
+      if (orbs[i].state === 'result2-heart') {
+        // Rotate around Y axis
+        var tx = orbs[i].targetPosition.x;
+        var tz = orbs[i].targetPosition.z;
+        var cos = Math.cos(0.003);
+        var sin = Math.sin(0.003);
+        orbs[i].targetPosition.x = tx * cos - tz * sin;
+        orbs[i].targetPosition.z = tx * sin + tz * cos;
+      }
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+// ===== EVENT LISTENERS =====
+btnStart.addEventListener('click', startFromIntro);
+btnYes.addEventListener('click', function () { handleChoice(true); });
+btnNo.addEventListener('click', function () { handleChoice(false); });
 btnReveal.addEventListener('click', showStep2);
 btnFinal.addEventListener('click', showStep3);
 btnRestart.addEventListener('click', resetAll);
+
+// ===== INIT =====
+initThree();
+createStars();
+createOrbs();
+setupIntro();
+animate();
