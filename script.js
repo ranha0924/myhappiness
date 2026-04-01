@@ -345,7 +345,7 @@ function showMoment(index) {
   // Bring the orb to center
   var orb = orbs[index];
   orb.state = 'active';
-  orb.targetPosition.set(0, 10, 10);
+  orb.targetPosition.set(0, 8, 10);
   orb.targetScale = 2.5;
   orb.targetOpacity = 1.0;
   orb.mesh.material.color.setHex(0xFFD700);
