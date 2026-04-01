@@ -40,7 +40,6 @@ var orbs = [];
 // ===== THREE.JS GLOBALS =====
 var scene, camera, renderer, starField, pointLight;
 var clock = new THREE.Clock();
-var projVector = new THREE.Vector3();
 
 // ===== THREE.JS SETUP =====
 function initThree() {
@@ -121,32 +120,43 @@ function createStars() {
   scene.add(starField);
 }
 
-// ===== ORB SYSTEM =====
+// ===== ORB SYSTEM (star-like sprites) =====
+var orbTexture = null;
+
+function createOrbTexture(color, size) {
+  var canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  var ctx = canvas.getContext('2d');
+  var half = size / 2;
+
+  // Outer glow
+  var g1 = ctx.createRadialGradient(half, half, 0, half, half, half);
+  g1.addColorStop(0, 'rgba(255,255,255,1)');
+  g1.addColorStop(0.15, 'rgba(255,235,150,0.8)');
+  g1.addColorStop(0.4, 'rgba(255,200,80,0.3)');
+  g1.addColorStop(0.7, 'rgba(255,165,0,0.08)');
+  g1.addColorStop(1, 'rgba(255,165,0,0)');
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, 0, size, size);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
 function createOrbs() {
-  var container = document.getElementById('emoji-overlay-container');
+  orbTexture = createOrbTexture(0xFFD700, 128);
 
   for (var i = 0; i < moments.length; i++) {
-    // Main sphere
-    var geo = new THREE.SphereGeometry(0.8, 32, 32);
-    var mat = new THREE.MeshStandardMaterial({
-      color: 0xFFD700,
-      emissive: 0xFFA500,
-      emissiveIntensity: 0.3,
-      transparent: true,
-      opacity: 1.0
-    });
-    var mesh = new THREE.Mesh(geo, mat);
-
-    // Glow sphere (BackSide)
-    var glowGeo = new THREE.SphereGeometry(1.1, 32, 32);
-    var glowMat = new THREE.MeshBasicMaterial({
+    var mat = new THREE.SpriteMaterial({
+      map: orbTexture,
       color: 0xFFD700,
       transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide
+      opacity: 1.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
-    var glowMesh = new THREE.Mesh(glowGeo, glowMat);
-    mesh.add(glowMesh);
+    var sprite = new THREE.Sprite(mat);
+    sprite.scale.setScalar(3);
 
     // Random initial position for intro
     var angle = (i / moments.length) * Math.PI * 2;
@@ -155,28 +165,19 @@ function createOrbs() {
     var y = (Math.random() - 0.5) * 8;
     var z = Math.sin(angle) * radius * 0.5;
 
-    mesh.position.set(x, y, z);
-    scene.add(mesh);
-
-    // Emoji HTML element
-    var el = document.createElement('div');
-    el.className = 'orb-emoji';
-    el.textContent = moments[i].emoji;
-    el.style.fontSize = '28px';
-    container.appendChild(el);
+    sprite.position.set(x, y, z);
+    scene.add(sprite);
 
     orbs.push({
       index: i,
-      mesh: mesh,
-      glowMesh: glowMesh,
-      htmlEl: el,
+      mesh: sprite,
       state: 'intro',
-      position: mesh.position.clone(),
-      targetPosition: mesh.position.clone(),
+      position: sprite.position.clone(),
+      targetPosition: sprite.position.clone(),
       opacity: 1.0,
       targetOpacity: 1.0,
-      scale: 1.0,
-      targetScale: 1.0,
+      scale: 3.0,
+      targetScale: 3.0,
       orbitAngle: angle,
       orbitRadius: 5 + Math.random() * 2,
       orbitSpeed: 0.3 + Math.random() * 0.2,
@@ -235,43 +236,12 @@ function updateOrbs(elapsed) {
     // Apply scale and opacity
     orb.mesh.scale.setScalar(orb.scale);
     orb.mesh.material.opacity = orb.opacity;
-    orb.glowMesh.material.opacity = orb.opacity * 0.15;
 
     // Pulse for result states
     if (orb.state === 'result1-circle') {
       var pulse = 1 + Math.sin(elapsed * 2 + orb.bobOffset) * 0.08;
       orb.mesh.scale.setScalar(orb.scale * pulse);
     }
-  }
-}
-
-function updateEmojiOverlays() {
-  var halfW = window.innerWidth / 2;
-  var halfH = window.innerHeight / 2;
-
-  for (var i = 0; i < orbs.length; i++) {
-    var orb = orbs[i];
-
-    if (orb.opacity < 0.1 || orb.state === 'hidden') {
-      orb.htmlEl.style.display = 'none';
-      continue;
-    }
-
-    projVector.copy(orb.mesh.position);
-    projVector.project(camera);
-
-    if (projVector.z > 1) {
-      orb.htmlEl.style.display = 'none';
-      continue;
-    }
-
-    var screenX = projVector.x * halfW + halfW;
-    var screenY = -projVector.y * halfH + halfH;
-
-    orb.htmlEl.style.display = 'block';
-    orb.htmlEl.style.transform = 'translate(-50%, -50%) translate(' + screenX + 'px, ' + screenY + 'px)';
-    orb.htmlEl.style.opacity = Math.min(orb.opacity, 1);
-    orb.htmlEl.style.fontSize = Math.max(orb.scale * 24, 8) + 'px';
   }
 }
 
@@ -284,7 +254,7 @@ function arrangeOrbsCircle(orbList, radius, centerY) {
       centerY + Math.sin(angle) * radius * 0.6,
       0
     );
-    orbList[i].targetScale = 0.8;
+    orbList[i].targetScale = 2.5;
     orbList[i].targetOpacity = 1.0;
   }
 }
@@ -295,7 +265,7 @@ function arrangeOrbsHeart(orbList) {
     var hx = 16 * Math.pow(Math.sin(t), 3);
     var hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
     orbList[i].targetPosition.set(hx * 0.25, hy * 0.25, 0);
-    orbList[i].targetScale = 0.7;
+    orbList[i].targetScale = 2.0;
     orbList[i].targetOpacity = 1.0;
   }
 }
@@ -336,7 +306,7 @@ function setupIntro() {
   for (var i = 0; i < orbs.length; i++) {
     orbs[i].state = 'intro';
     orbs[i].targetOpacity = 1.0;
-    orbs[i].targetScale = 1.0;
+    orbs[i].targetScale = 3.0;
   }
 }
 
@@ -351,7 +321,7 @@ function startFromIntro() {
       Math.sin(angle) * dist * 0.3
     );
     orbs[i].targetOpacity = 0;
-    orbs[i].targetScale = 0.3;
+    orbs[i].targetScale = 0.5;
     orbs[i].state = 'hidden';
   }
 
@@ -376,12 +346,10 @@ function showMoment(index) {
   var orb = orbs[index];
   orb.state = 'active';
   orb.targetPosition.set(0, 3, 10);
-  orb.targetScale = 2.0;
+  orb.targetScale = 5.0;
   orb.targetOpacity = 1.0;
   // Reset to gold color for active display
   orb.mesh.material.color.setHex(0xFFD700);
-  orb.mesh.material.emissive.setHex(0xFFA500);
-  orb.glowMesh.material.color.setHex(0xFFD700);
 
   momentCard.classList.remove('card-exit', 'card-enter');
   momentCard.classList.add('card-enter');
@@ -403,7 +371,7 @@ function handleChoice(isHappy) {
     // Fly to orbit zone
     orb.state = 'happy';
     orb.targetPosition.set(0, 10, 0);
-    orb.targetScale = 0.6;
+    orb.targetScale = 2.0;
     orb.targetOpacity = 1.0;
   } else {
     // Dim and push far away
@@ -414,12 +382,10 @@ function handleChoice(isHappy) {
       (Math.random() - 0.5) * 30,
       Math.sin(angle) * 20
     );
-    orb.targetScale = 0.5;
-    orb.targetOpacity = 0.2;
+    orb.targetScale = 1.5;
+    orb.targetOpacity = 0.15;
     // Dim the color
     orb.mesh.material.color.setHex(0x4A4A6A);
-    orb.mesh.material.emissive.setHex(0x2A2A4A);
-    orb.glowMesh.material.color.setHex(0x4A4A6A);
   }
 
   momentCard.classList.add('card-exit');
@@ -482,8 +448,8 @@ function showResult() {
 
   // Keep unhappy orbs dim and far
   for (var k = 0; k < unhappyOrbs.length; k++) {
-    unhappyOrbs[k].targetOpacity = 0.15;
-    unhappyOrbs[k].targetScale = 0.4;
+    unhappyOrbs[k].targetOpacity = 0.12;
+    unhappyOrbs[k].targetScale = 1.2;
   }
 
   var happyCount = happyOrbs.length;
@@ -526,13 +492,10 @@ function showStep2() {
       // Set diverse return color (blue/purple tones)
       var returnColor = returnColors[orb.index % returnColors.length];
       orb.mesh.material.color.setHex(returnColor);
-      orb.mesh.material.emissive.setHex(returnColor);
-      orb.mesh.material.emissiveIntensity = 0.3;
-      orb.glowMesh.material.color.setHex(returnColor);
 
       orb.state = 'result2-heart';
       orb.targetOpacity = 1.0;
-      orb.targetScale = 0.7;
+      orb.targetScale = 2.0;
     }, baseDelay + idx * 300);
   });
 
@@ -615,16 +578,13 @@ function resetAll() {
       (Math.random() - 0.5) * 8,
       Math.sin(angle) * radius * 0.5
     );
-    orb.targetScale = 1.0;
+    orb.targetScale = 3.0;
     orb.targetOpacity = 1.0;
-    orb.scale = 0.3;
+    orb.scale = 0.5;
     orb.opacity = 0;
 
     // Reset colors to gold
     orb.mesh.material.color.setHex(0xFFD700);
-    orb.mesh.material.emissive.setHex(0xFFA500);
-    orb.mesh.material.emissiveIntensity = 0.3;
-    orb.glowMesh.material.color.setHex(0xFFD700);
   }
 
   switchScene(sceneResult, sceneIntro);
@@ -645,7 +605,6 @@ function animate() {
 
   // Orbs
   updateOrbs(elapsed);
-  updateEmojiOverlays();
 
   // Heart rotation in result3
   if (currentPhase === 'result3' || currentPhase === 'result2') {

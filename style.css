@@ -28,28 +28,6 @@ canvas {
   z-index: 0;
 }
 
-/* ===== Emoji Overlay ===== */
-#emoji-overlay-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.orb-emoji {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
-  line-height: 1;
-  text-align: center;
-}
-
 /* ===== Accent Text ===== */
 .text-accent {
   background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -167,9 +145,12 @@ canvas {
 /* ===== Orb Count (replaces progress bar) ===== */
 .orb-count {
   font-size: 14px;
-  color: #808090;
+  color: #A0A0C0;
   margin-bottom: 32px;
   min-height: 24px;
+  position: relative;
+  z-index: 5;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
 /* ===== Moment Card ===== */
