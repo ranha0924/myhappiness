@@ -84,11 +84,11 @@ function createStars() {
   var colors = new Float32Array(count * 3);
 
   for (var i = 0; i < count; i++) {
-    var r = 200 * Math.cbrt(Math.random());
+    var r = 40 + 160 * Math.cbrt(Math.random());
     var theta = Math.random() * Math.PI * 2;
     var phi = Math.acos(2 * Math.random() - 1);
     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) - 10;
     positions[i * 3 + 2] = r * Math.cos(phi);
 
     var brightness = 0.3 + Math.random() * 0.7;
@@ -346,7 +346,7 @@ function showMoment(index) {
   cardDesc.textContent = m.desc;
 
   var happyCount = choices.filter(function (c) { return c; }).length;
-  orbCountEl.textContent = happyCount > 0 ? (happyCount + '개의 행복') : '';
+  orbCountEl.textContent = '';
 
   // Bring the orb to center
   var orb = orbs[index];
