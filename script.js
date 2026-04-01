@@ -84,14 +84,14 @@ function createStars() {
   var colors = new Float32Array(count * 3);
 
   for (var i = 0; i < count; i++) {
-    var r = 200 * Math.cbrt(seededRandom(i * 3 + 1));
-    var theta = seededRandom(i * 3 + 2) * Math.PI * 2;
-    var phi = Math.acos(2 * seededRandom(i * 3 + 3) - 1);
+    var r = 200 * Math.cbrt(Math.random());
+    var theta = Math.random() * Math.PI * 2;
+    var phi = Math.acos(2 * Math.random() - 1);
     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
     positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
     positions[i * 3 + 2] = r * Math.cos(phi);
 
-    var brightness = 0.3 + seededRandom(i * 7 + 100) * 0.7;
+    var brightness = 0.3 + Math.random() * 0.7;
     colors[i * 3] = brightness;
     colors[i * 3 + 1] = brightness;
     colors[i * 3 + 2] = brightness;
