@@ -133,10 +133,10 @@ function createOrbTexture(color, size) {
   // Outer glow
   var g1 = ctx.createRadialGradient(half, half, 0, half, half, half);
   g1.addColorStop(0, 'rgba(255,255,255,1)');
-  g1.addColorStop(0.15, 'rgba(255,235,150,0.8)');
-  g1.addColorStop(0.4, 'rgba(255,200,80,0.3)');
-  g1.addColorStop(0.7, 'rgba(255,165,0,0.08)');
-  g1.addColorStop(1, 'rgba(255,165,0,0)');
+  g1.addColorStop(0.15, 'rgba(255,255,255,0.8)');
+  g1.addColorStop(0.4, 'rgba(255,255,255,0.3)');
+  g1.addColorStop(0.7, 'rgba(255,255,255,0.08)');
+  g1.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = g1;
   ctx.fillRect(0, 0, size, size);
 
@@ -144,19 +144,19 @@ function createOrbTexture(color, size) {
 }
 
 function createOrbs() {
-  orbTexture = createOrbTexture(0xFFD700, 128);
+  orbTexture = createOrbTexture(0xFFFFFF, 128);
 
   for (var i = 0; i < moments.length; i++) {
     var mat = new THREE.SpriteMaterial({
       map: orbTexture,
-      color: 0xFFD700,
+      color: 0xFFFFFF,
       transparent: true,
       opacity: 1.0,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
     var sprite = new THREE.Sprite(mat);
-    sprite.scale.setScalar(3);
+    sprite.scale.setScalar(1.5);
 
     // Random initial position for intro
     var angle = (i / moments.length) * Math.PI * 2;
@@ -176,8 +176,8 @@ function createOrbs() {
       targetPosition: sprite.position.clone(),
       opacity: 1.0,
       targetOpacity: 1.0,
-      scale: 3.0,
-      targetScale: 3.0,
+      scale: 1.5,
+      targetScale: 1.5,
       orbitAngle: angle,
       orbitRadius: 5 + Math.random() * 2,
       orbitSpeed: 0.3 + Math.random() * 0.2,
@@ -254,7 +254,7 @@ function arrangeOrbsCircle(orbList, radius, centerY) {
       centerY + Math.sin(angle) * radius * 0.6,
       0
     );
-    orbList[i].targetScale = 2.5;
+    orbList[i].targetScale = 1.5;
     orbList[i].targetOpacity = 1.0;
   }
 }
@@ -265,7 +265,7 @@ function arrangeOrbsHeart(orbList) {
     var hx = 16 * Math.pow(Math.sin(t), 3);
     var hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
     orbList[i].targetPosition.set(hx * 0.25, hy * 0.25, 0);
-    orbList[i].targetScale = 2.0;
+    orbList[i].targetScale = 1.5;
     orbList[i].targetOpacity = 1.0;
   }
 }
@@ -306,7 +306,7 @@ function setupIntro() {
   for (var i = 0; i < orbs.length; i++) {
     orbs[i].state = 'intro';
     orbs[i].targetOpacity = 1.0;
-    orbs[i].targetScale = 3.0;
+    orbs[i].targetScale = 1.5;
   }
 }
 
@@ -346,10 +346,9 @@ function showMoment(index) {
   var orb = orbs[index];
   orb.state = 'active';
   orb.targetPosition.set(0, 3, 10);
-  orb.targetScale = 5.0;
+  orb.targetScale = 2.5;
   orb.targetOpacity = 1.0;
-  // Reset to gold color for active display
-  orb.mesh.material.color.setHex(0xFFD700);
+  orb.mesh.material.color.setHex(0xFFFFFF);
 
   momentCard.classList.remove('card-exit', 'card-enter');
   momentCard.classList.add('card-enter');
@@ -371,7 +370,7 @@ function handleChoice(isHappy) {
     // Fly to orbit zone
     orb.state = 'happy';
     orb.targetPosition.set(0, 10, 0);
-    orb.targetScale = 2.0;
+    orb.targetScale = 1.2;
     orb.targetOpacity = 1.0;
   } else {
     // Dim and push far away
@@ -382,10 +381,9 @@ function handleChoice(isHappy) {
       (Math.random() - 0.5) * 30,
       Math.sin(angle) * 20
     );
-    orb.targetScale = 1.5;
+    orb.targetScale = 0.8;
     orb.targetOpacity = 0.15;
-    // Dim the color
-    orb.mesh.material.color.setHex(0x4A4A6A);
+    orb.mesh.material.color.setHex(0xFFFFFF);
   }
 
   momentCard.classList.add('card-exit');
@@ -449,7 +447,7 @@ function showResult() {
   // Keep unhappy orbs dim and far
   for (var k = 0; k < unhappyOrbs.length; k++) {
     unhappyOrbs[k].targetOpacity = 0.12;
-    unhappyOrbs[k].targetScale = 1.2;
+    unhappyOrbs[k].targetScale = 0.6;
   }
 
   var happyCount = happyOrbs.length;
@@ -490,12 +488,11 @@ function showStep2() {
   unhappyOrbs.forEach(function (orb, idx) {
     setTimeout(function () {
       // Set diverse return color (blue/purple tones)
-      var returnColor = returnColors[orb.index % returnColors.length];
-      orb.mesh.material.color.setHex(returnColor);
+      orb.mesh.material.color.setHex(0xFFFFFF);
 
       orb.state = 'result2-heart';
       orb.targetOpacity = 1.0;
-      orb.targetScale = 2.0;
+      orb.targetScale = 1.5;
     }, baseDelay + idx * 300);
   });
 
@@ -578,13 +575,12 @@ function resetAll() {
       (Math.random() - 0.5) * 8,
       Math.sin(angle) * radius * 0.5
     );
-    orb.targetScale = 3.0;
+    orb.targetScale = 1.5;
     orb.targetOpacity = 1.0;
-    orb.scale = 0.5;
+    orb.scale = 0.3;
     orb.opacity = 0;
 
-    // Reset colors to gold
-    orb.mesh.material.color.setHex(0xFFD700);
+    orb.mesh.material.color.setHex(0xFFFFFF);
   }
 
   switchScene(sceneResult, sceneIntro);
