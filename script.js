@@ -346,7 +346,7 @@ function showMoment(index) {
   cardDesc.textContent = m.desc;
 
   var happyCount = choices.filter(function (c) { return c; }).length;
-  orbCountEl.textContent = happyCount > 0 ? (happyCount + '개의 행복') : '';
+  orbCountEl.textContent = '';
 
   // Bring the orb to center
   var orb = orbs[index];
